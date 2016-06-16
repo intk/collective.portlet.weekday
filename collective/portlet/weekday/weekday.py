@@ -15,7 +15,9 @@ from plone.memoize.instance import memoize
 
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from plone.app.vocabularies.catalog import SearchableTextSourceBinder
-from plone.app.form.widgets.wysiwygwidget import WYSIWYGWidget
+#from plone.app.form.widgets.wysiwygwidget import WYSIWYGWidget
+from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
 
 from plone.i18n.normalizer.interfaces import IIDNormalizer
 
@@ -24,7 +26,7 @@ from datetime import date
 from DateTime import DateTime
 import time
 
-from collective.portlet.weekday import MessageFactory as _
+from collective.portlet.weekday import PloneMessageFactory as _
 
 from Acquisition import aq_inner
 from collective.portlet.weekday.interfaces import IWeekDayContent
@@ -33,56 +35,59 @@ from plone.app.z3cform.layout import wrap_form
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
 from plone.app.registry.browser.controlpanel import RegistryEditForm
 from Products.statusmessages.interfaces import IStatusMessage
+from Products.CMFPlone.utils import getFSVersionTuple
+
+PLONE5 = getFSVersionTuple()[0] >= 5
+
+if PLONE5:
+    base_AddForm = base.AddForm
+    base_EditForm = base.EditForm
+else:
+    from plone.app.portlets.browser.z3cformhelper import AddForm as base_AddForm  # noqa
+    from plone.app.portlets.browser.z3cformhelper import EditForm as base_EditForm  # noqa
+    from z3c.form import field
 
 class IWeekDayPortlet(IPortletDataProvider):
     """A portlet which renders content depending on the day of the week
     """
     header = schema.TextLine(
-        title=_(u"title", default=u"Title"),
+        title=_(u"Title", default=u"Title"),
         description=_(u"portlet_title", default=u"Title of the portlet. Leave empty to display the current date."),
-        default=u"",
         required=False)
     
-    monday = schema.Text(
+    monday = RichText(
         title=_(u"monday", default=u"Monday"),
         description=_(u"monday_content", default=u"Content to display on Mondays"),
-        default=u"",
         required=False)
     
-    tuesday = schema.Text(
+    tuesday = RichText(
         title=_(u"tuesday", default=u"Tuesday"),
         description=_(u"tuesday_content", default=u"Content to display on Tuesdays"),
-        default=u"",
         required=False)
     
-    wednesday = schema.Text(
+    wednesday = RichText(
         title=_(u"wednesday", default=u"Wednesday"),
         description=_(u"wednesday_content", default=u"Content to display on Wednesdays"),
-        default=u"",
         required=False)
     
-    thursday = schema.Text(
+    thursday = RichText(
         title=_(u"thursday", default=u"Thursday"),
         description=_(u"thursday_content", default=u"Content to display on Thursdays"),
-        default=u"",
         required=False)
     
-    friday = schema.Text(
+    friday = RichText(
         title=_(u"friday", default=u"Friday"),
         description=_(u"friday_content", default=u"Content to display on Fridays"),
-        default=u"",
         required=False)
     
-    saturday = schema.Text(
+    saturday = RichText(
         title=_(u"saturday", default=u"Saturday"),
         description=_(u"saturday_content", default=u"Content to display on Saturdays"),
-        default=u"",
         required=False)
     
-    sunday = schema.Text(
+    sunday = RichText(
         title=_(u"sunday", default=u"Sunday"),
         description=_(u"sunday_content", default=u"Content to display on Sundays"),
-        default=u"",
         required=False)
 
 class Assignment(base.Assignment):
@@ -165,6 +170,9 @@ class Renderer(base.Renderer):
         """
         orig = text
         context = aq_inner(self.context)
+        if isinstance(orig, RichTextValue):
+            orig = orig.raw
+
         if not isinstance(orig, unicode):
             # Apply a potentially lossy transformation, and hope we stored
             # utf-8 text. There were bugs in earlier versions of this portlet
@@ -178,8 +186,15 @@ class Renderer(base.Renderer):
         orig = orig.encode('utf-8')
 
         transformer = getToolByName(context, 'portal_transforms')
+        transformer_context = context
+        if hasattr(self, '__portlet_metadata__'):
+            if ('category' in self.__portlet_metadata__ and
+                    self.__portlet_metadata__['category'] == 'context'):
+                assignment_context_path = self.__portlet_metadata__['key']
+                assignment_context = context.unrestrictedTraverse(assignment_context_path)
+                transformer_context = assignment_context
         data = transformer.convertTo(mt, orig,
-                                     context=context, mimetype='text/html')
+                                     context=transformer_context, mimetype='text/html')
         result = data.getData()
         if result:
             if isinstance(result, str):
@@ -187,30 +202,43 @@ class Renderer(base.Renderer):
             return result
         return None
 
-class AddForm(base.AddForm):
-    form_fields = form.Fields(IWeekDayPortlet)
-    form_fields['monday'].custom_widget = WYSIWYGWidget
+class AddForm(base_AddForm):
+    #form_fields = form.Fields(IWeekDayPortlet)
+    
+    if PLONE5:
+        schema = IWeekDayPortlet
+    else:
+        fields = field.Fields(IWeekDayPortlet)
+
+    """form_fields['monday'].custom_widget = WYSIWYGWidget
     form_fields['tuesday'].custom_widget = WYSIWYGWidget
     form_fields['wednesday'].custom_widget = WYSIWYGWidget
     form_fields['thursday'].custom_widget = WYSIWYGWidget
     form_fields['friday'].custom_widget = WYSIWYGWidget
     form_fields['saturday'].custom_widget = WYSIWYGWidget
-    form_fields['sunday'].custom_widget = WYSIWYGWidget
+    form_fields['sunday'].custom_widget = WYSIWYGWidget"""
     label = _(u"Add week day portlet")
     description = _(u"This portlet renders content depending on the day of the week.")
 
     def create(self, data):
         return Assignment(**data)
 
-class EditForm(base.EditForm):
-    form_fields = form.Fields(IWeekDayPortlet)
-    form_fields['monday'].custom_widget = WYSIWYGWidget
+class EditForm(base_EditForm):
+    #form_fields = form.Fields(IWeekDayPortlet)
+
+    if PLONE5:
+        schema = IWeekDayPortlet
+    else:
+        fields = field.Fields(IWeekDayPortlet)
+
+    """form_fields['monday'].custom_widget = WYSIWYGWidget
     form_fields['tuesday'].custom_widget = WYSIWYGWidget
     form_fields['wednesday'].custom_widget = WYSIWYGWidget
     form_fields['thursday'].custom_widget = WYSIWYGWidget
     form_fields['friday'].custom_widget = WYSIWYGWidget
     form_fields['saturday'].custom_widget = WYSIWYGWidget
-    form_fields['sunday'].custom_widget = WYSIWYGWidget
+    form_fields['sunday'].custom_widget = WYSIWYGWidget"""
+
     label = _(u"Edit week day portlet")
     description = _(u"This portlet renders content depending on the day of the week.")
 

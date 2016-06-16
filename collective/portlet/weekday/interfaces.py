@@ -1,21 +1,23 @@
 from zope.interface import Interface
 from zope import schema
 
-from collective.portlet.weekday import MessageFactory as _
+from collective.portlet.weekday import PloneMessageFactory as _
+from plone.app.textfield import RichText
+from plone.theme.interfaces import IDefaultPloneLayer
+
+class IThemeSpecific(IDefaultPloneLayer):
+    """Marker interface that defines a Zope 3 browser layer.
+       If you need to register a viewlet only for the
+       "Weekday portlet" this interface must be its layer
+    """
 
 class IWeekDayContent(Interface):
     """
     This interface defines the weekdays record on the registry
     """
-    #form.fieldset(
-     #   'Activate/deactivate', 
-      #  label=_(u"Activate/deactivate"),
-       # fields=['mondayActive', 'tuesdayActive', 'wednesdayActive', 'thursdayActive', 'fridayActive', 'saturdayActive', 'sundayActive']
-    #)
     
     mondayActive = schema.Bool(
         title=_(u"monday_active", default=u"Active"),
-        default=False,
         required=False)
     
     tuesdayActive = schema.Bool(
@@ -48,52 +50,44 @@ class IWeekDayContent(Interface):
         default=False,
         required=False)
     
-    monday = schema.Text(
-        title=_(u"monday", default=u"Message"),
-        description=_(u"monday_content", default=u"Content to display on Mondays."),
-        default=u"",
+    monday = RichText(
+        title=_(u"monday", default=u"Monday"),
+        description=_(u"monday_content", default=u"Content to display on Mondays"),
         required=False)
     
-    tuesday = schema.Text(
-        title=_(u"tuesday", default=u"Message"),
-        description=_(u"tuesday_content", default=u"Content to display on Tuesdays."),
-        default=u"",
+    tuesday = RichText(
+        title=_(u"tuesday", default=u"Tuesday"),
+        description=_(u"tuesday_content", default=u"Content to display on Tuesdays"),
         required=False)
     
-    wednesday = schema.Text(
-        title=_(u"wednesday", default=u"Message"),
-        description=_(u"wednesday_content", default=u"Content to display on Wednesdays."),
-        default=u"",
+    wednesday = RichText(
+        title=_(u"wednesday", default=u"Wednesday"),
+        description=_(u"wednesday_content", default=u"Content to display on Wednesdays"),
         required=False)
     
-    thursday = schema.Text(
-        title=_(u"thursday", default=u"Message"),
-        description=_(u"thursday_content", default=u"Content to display on Thursdays."),
-        default=u"",
+    thursday = RichText(
+        title=_(u"thursday", default=u"Thursday"),
+        description=_(u"thursday_content", default=u"Content to display on Thursdays"),
         required=False)
     
-    friday = schema.Text(
-        title=_(u"friday", default=u"Message"),
-        description=_(u"friday_content", default=u"Content to display on Fridays."),
-        default=u"",
+    friday = RichText(
+        title=_(u"friday", default=u"Friday"),
+        description=_(u"friday_content", default=u"Content to display on Fridays"),
         required=False)
     
-    saturday = schema.Text(
-        title=_(u"saturday", default=u"Message"),
-        description=_(u"saturday_content", default=u"Content to display on Saturdays."),
-        default=u"",
+    saturday = RichText(
+        title=_(u"saturday", default=u"Saturday"),
+        description=_(u"saturday_content", default=u"Content to display on Saturdays"),
         required=False)
     
-    sunday = schema.Text(
-        title=_(u"sunday", default=u"Message"),
-        description=_(u"sunday_content", default=u"Content to display on Sundays."),
-        default=u"",
+    sunday = RichText(
+        title=_(u"sunday", default=u"Sunday"),
+        description=_(u"sunday_content", default=u"Content to display on Sundays"),
         required=False)
     
-    no_event = schema.Text(
+    no_event = RichText(
         title=_(u"no_event", default=u"No Events"),
         description=_(u"sunday_content", default=u"Content to display when there are no events."),
-        default=u"",
         required=False)
     
     
