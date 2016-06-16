@@ -1,4 +1,4 @@
-<div class="portlet portlet-weekday"
+<div class="portlet-weekday"
     i18n:domain="plone">
 
     <div class="portletHeader">
